@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { LayoutDashboard, LogOut, Settings, Plus, User, Search, ShieldAlert, BadgeInfo, Calendar, Landmark, MapPin, Eye, CheckCircle2 } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings, Plus, User, Search, ShieldAlert, BadgeInfo, Calendar, Landmark, MapPin, Eye, CheckCircle2, ArrowRightLeft, Undo2 } from "lucide-react";
 
 interface Category {
   id: string;
@@ -18,6 +18,12 @@ interface Category {
 interface Department {
   id: string;
   name: string;
+}
+
+interface Employee {
+  id: string;
+  name: string;
+  email: string;
 }
 
 interface Allocation {
@@ -60,6 +66,19 @@ interface Asset {
   maintenanceRequests?: MaintenanceRequest[];
 }
 
+interface TransferRequest {
+  id: string;
+  assetId: string;
+  asset: { id: string; name: string; assetTag: string };
+  fromUserId: string | null;
+  fromUser?: { id: string; name: string; email: string } | null;
+  toUserId: string;
+  toUser: { id: string; name: string; email: string };
+  reason: string | null;
+  status: "REQUESTED" | "APPROVED" | "REJECTED" | "REALLOCATED";
+  requestedAt: string;
+}
+
 export default function AssetRegistryPage() {
   const router = useRouter();
 
@@ -70,6 +89,8 @@ export default function AssetRegistryPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [transfers, setTransfers] = useState<TransferRequest[]>([]);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [catFilter, setCatFilter] = useState("");
@@ -103,20 +124,32 @@ export default function AssetRegistryPage() {
   const [photoUrl, setPhotoUrl] = useState("");
   const [isBookable, setIsBookable] = useState(false);
 
+  // Allocation Form Fields
+  const [assigneeType, setAssigneeType] = useState<"employee" | "department">("employee");
+  const [allocHolderId, setAllocHolderId] = useState("");
+  const [allocDeptId, setAllocDeptId] = useState("");
+  const [allocExpectedReturnDate, setAllocExpectedReturnDate] = useState("");
+
+  // Conflict / Transfer Flow Fields
+  const [conflictError, setConflictError] = useState("");
+  const [showTransferBtn, setShowTransferBtn] = useState(false);
+  const [transferReason, setTransferReason] = useState("");
+
+  // Return Form Fields
+  const [returnCondition, setReturnCondition] = useState("");
+
   // Load current session
   const fetchSession = async () => {
     try {
-      const res = await fetch("/api/admin/employees?limit=1"); // Quick way to see if authenticated
+      const res = await fetch("/api/admin/employees?limit=1"); 
       if (res.status === 401) {
         router.push("/login");
         return;
       }
-      // Decode JWT session cookie locally to get current user details
       const cookies = document.cookie.split("; ");
       const sessionCookie = cookies.find((row) => row.startsWith("session="));
       if (sessionCookie) {
         const token = sessionCookie.split("=")[1];
-        // Decodes header/payload (rough parse for UI roles)
         const base64Url = token.split(".")[1];
         const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
         const jsonPayload = decodeURIComponent(
@@ -157,6 +190,7 @@ export default function AssetRegistryPage() {
       setAssets(data.assets || []);
       setCategories(data.categories || []);
       setDepartments(data.departments || []);
+      setEmployees(data.users || []); // Users returned from route
       setTotalPages(data.totalPages || 1);
       setTotalAssets(data.total || 0);
     } catch (err: any) {
@@ -166,9 +200,23 @@ export default function AssetRegistryPage() {
     }
   };
 
+  // Fetch Transfer Requests
+  const fetchTransfers = async () => {
+    try {
+      const res = await fetch("/api/transfers?status=REQUESTED");
+      if (res.ok) {
+        const data = await res.json();
+        setTransfers(data.transfers || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch transfer requests:", e);
+    }
+  };
+
   useEffect(() => {
     fetchSession();
     fetchAssets(1);
+    fetchTransfers();
   }, []);
 
   const handleFilterSubmit = (e: React.FormEvent) => {
@@ -184,7 +232,6 @@ export default function AssetRegistryPage() {
     setDeptFilter("");
     setLocFilter("");
     setPage(1);
-    // Fetch directly after resetting states
     setTimeout(() => fetchAssets(1), 0);
   };
 
@@ -245,6 +292,13 @@ export default function AssetRegistryPage() {
   const handleViewDetails = async (assetId: string) => {
     setDetailsLoading(true);
     setDetailsOpen(true);
+    setConflictError("");
+    setShowTransferBtn(false);
+    setTransferReason("");
+    setReturnCondition("");
+    setAllocHolderId("");
+    setAllocDeptId("");
+    setAllocExpectedReturnDate("");
     try {
       const res = await fetch(`/api/assets/${assetId}`);
       const data = await res.json();
@@ -258,13 +312,144 @@ export default function AssetRegistryPage() {
     }
   };
 
+  // Allocate Asset
+  const handleAllocateAsset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setConflictError("");
+    setSuccess("");
+    if (!selectedAsset) return;
+
+    const holderId = assigneeType === "employee" ? allocHolderId : null;
+    const departmentId = assigneeType === "department" ? allocDeptId : null;
+
+    if (!holderId && !departmentId) {
+      setError("Please select an employee or a department to assign this asset.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/allocations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assetId: selectedAsset.id,
+          holderId,
+          departmentId,
+          expectedReturnDate: allocExpectedReturnDate || null,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 409) {
+        // Conflict detected: replace button with transfer request
+        setConflictError(data.error);
+        setShowTransferBtn(true);
+        return;
+      }
+
+      if (!res.ok) throw new Error(data.error || "Failed to allocate asset");
+
+      setSuccess("Asset allocated successfully.");
+      setDetailsOpen(false);
+      fetchAssets(page);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  // Raise Transfer Request
+  const handleRaiseTransfer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    if (!selectedAsset) return;
+
+    const targetUserId = allocHolderId; // Transfer is user-to-user in transfer requests
+    if (!targetUserId) {
+      setError("Please select a target employee for the transfer.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/transfers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assetId: selectedAsset.id,
+          toUserId: targetUserId,
+          reason: transferReason || null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to raise transfer request");
+
+      setSuccess("Transfer request submitted successfully and is pending approval.");
+      setDetailsOpen(false);
+      fetchTransfers();
+      fetchAssets(page);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  // Return Asset
+  const handleReturnAsset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    if (!selectedAsset) return;
+
+    try {
+      const res = await fetch("/api/allocations/return", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assetId: selectedAsset.id,
+          conditionAtReturn: returnCondition || null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to return asset");
+
+      setSuccess("Asset returned to inventory.");
+      setDetailsOpen(false);
+      fetchAssets(page);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  // Resolve Transfer (Approve/Reject)
+  const handleResolveTransfer = async (requestId: string, action: "APPROVE" | "REJECT") => {
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch("/api/transfers", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: requestId, action }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to resolve transfer request");
+
+      setSuccess(`Transfer request ${action === "APPROVE" ? "approved" : "rejected"} successfully.`);
+      fetchTransfers();
+      fetchAssets(page);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();
   };
 
-  // Helper to color badge based on status
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "AVAILABLE":
@@ -285,6 +470,8 @@ export default function AssetRegistryPage() {
         return "bg-slate-800 text-slate-400 border-slate-700";
     }
   };
+
+  const showTransfersBoard = currentUser?.role === "ADMIN" || currentUser?.role === "ASSET_MANAGER" || currentUser?.role === "DEPARTMENT_HEAD";
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
@@ -339,7 +526,7 @@ export default function AssetRegistryPage() {
               Asset Registry
             </h1>
             <p className="mt-1 text-slate-400">
-              Search, filter, and register physical assets.
+              Manage inventories, assign assets, or approve transfers.
             </p>
           </div>
 
@@ -360,7 +547,7 @@ export default function AssetRegistryPage() {
                       setPhotoUrl("");
                       setIsBookable(false);
                     }}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-2 rounded-lg shadow-md shadow-indigo-600/10"
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-2 rounded-lg"
                   >
                     <Plus className="h-4 w-4" />
                     Register Asset
@@ -396,7 +583,7 @@ export default function AssetRegistryPage() {
                         required
                         value={categoryId}
                         onChange={(e) => setCategoryId(e.target.value)}
-                        className="w-full rounded-lg border border-slate-800 bg-slate-950 p-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                        className="w-full rounded-lg border border-slate-800 bg-slate-950 p-2.5 text-sm text-slate-100 focus:outline-none"
                       >
                         <option value="">Select Category...</option>
                         {categories.map((c) => (
@@ -425,7 +612,7 @@ export default function AssetRegistryPage() {
                       <select
                         value={departmentId}
                         onChange={(e) => setDepartmentId(e.target.value)}
-                        className="w-full rounded-lg border border-slate-800 bg-slate-950 p-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                        className="w-full rounded-lg border border-slate-800 bg-slate-950 p-2.5 text-sm text-slate-100 focus:outline-none"
                       >
                         <option value="none">Unassigned</option>
                         {departments.map((d) => (
@@ -449,7 +636,7 @@ export default function AssetRegistryPage() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                        Acquisition Cost (USD)
+                        Acquisition Cost
                       </label>
                       <Input
                         type="number"
@@ -470,7 +657,7 @@ export default function AssetRegistryPage() {
                       <Input
                         value={condition}
                         onChange={(e) => setCondition(e.target.value)}
-                        placeholder="New, Good, Fair..."
+                        placeholder="New"
                         className="bg-slate-950 border-slate-800 text-slate-100"
                       />
                     </div>
@@ -481,7 +668,7 @@ export default function AssetRegistryPage() {
                       <Input
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
-                        placeholder="HQ - Floor 3"
+                        placeholder="HQ"
                         className="bg-slate-950 border-slate-800 text-slate-100"
                       />
                     </div>
@@ -489,17 +676,17 @@ export default function AssetRegistryPage() {
 
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                      Photo URL (Stubbed)
+                      Photo URL
                     </label>
                     <Input
                       value={photoUrl}
                       onChange={(e) => setPhotoUrl(e.target.value)}
-                      placeholder="https://images.unsplash.com/photo-stub..."
+                      placeholder="https://images.unsplash.com/photo-stub"
                       className="bg-slate-950 border-slate-800 text-slate-100"
                     />
                   </div>
 
-                  <div className="flex items-center gap-2 pt-2">
+                  <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       id="isBookable"
@@ -508,17 +695,12 @@ export default function AssetRegistryPage() {
                       className="h-4 w-4 rounded border-slate-800 bg-slate-950 text-indigo-600 focus:ring-indigo-500"
                     />
                     <label htmlFor="isBookable" className="text-sm text-slate-300 select-none">
-                      Mark as shared resource (Bookable by staff)
+                      Mark as shared resource (Bookable)
                     </label>
                   </div>
 
-                  <DialogFooter className="pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setRegisterOpen(false)}
-                      className="border-slate-800 hover:bg-slate-800 text-slate-300"
-                    >
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setRegisterOpen(false)} className="border-slate-800 text-slate-300">
                       Cancel
                     </Button>
                     <Button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white">
@@ -543,6 +725,64 @@ export default function AssetRegistryPage() {
             <CheckCircle2 className="h-5 w-5 shrink-0" />
             <span>{success}</span>
           </div>
+        )}
+
+        {/* Transfer Requests Panel */}
+        {showTransfersBoard && transfers.length > 0 && (
+          <Card className="border-indigo-500/20 bg-indigo-950/10 text-slate-100 shadow-md mb-8">
+            <CardHeader className="py-4 border-b border-slate-800 flex flex-row items-center gap-2.5">
+              <ArrowRightLeft className="h-5 w-5 text-indigo-400" />
+              <div>
+                <CardTitle className="text-md font-bold text-white">Pending Transfer Requests</CardTitle>
+                <CardDescription className="text-slate-400 text-xs">Review and approve release/assignment requests.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="overflow-x-auto rounded-lg border border-slate-800 bg-slate-950/30">
+                <Table>
+                  <TableHeader className="bg-slate-900/40 text-xs">
+                    <TableRow>
+                      <TableHead>Asset</TableHead>
+                      <TableHead>Current Holder</TableHead>
+                      <TableHead>Target Recipient</TableHead>
+                      <TableHead>Reason</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="text-xs">
+                    {transfers.map((req) => (
+                      <TableRow key={req.id} className="hover:bg-slate-900/20 border-b border-slate-800/40">
+                        <TableCell className="font-semibold text-slate-200">
+                          <div>{req.asset.name}</div>
+                          <div className="text-[10px] text-indigo-400 font-bold">{req.asset.assetTag}</div>
+                        </TableCell>
+                        <TableCell className="text-slate-300">{req.fromUser?.name || "Inventory"}</TableCell>
+                        <TableCell className="text-slate-200 font-medium">{req.toUser.name}</TableCell>
+                        <TableCell className="text-slate-400 italic font-mono max-w-[200px] truncate">{req.reason || "No reason given"}</TableCell>
+                        <TableCell className="text-right flex items-center justify-end gap-2 py-3">
+                          <Button
+                            size="sm"
+                            onClick={() => handleResolveTransfer(req.id, "APPROVE")}
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold h-7 py-0 px-3"
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleResolveTransfer(req.id, "REJECT")}
+                            className="text-red-400 hover:text-red-300 hover:bg-red-950/20 h-7 py-0 px-3"
+                          >
+                            Reject
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Search & Filters */}
@@ -737,7 +977,7 @@ export default function AssetRegistryPage() {
         </Card>
       </main>
 
-      {/* Asset Details & Histories Dialog Overlay */}
+      {/* Asset Details, Allocations, Maintenance, Return & Transfer Dialog Overlay */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent className="bg-slate-900 text-slate-100 border-slate-800 max-w-4xl max-h-[85vh] overflow-y-auto">
           {detailsLoading || !selectedAsset ? (
@@ -816,7 +1056,177 @@ export default function AssetRegistryPage() {
                 </div>
               </div>
 
-              {/* History Tabs / Lists */}
+              {/* Phase 3 Action Block (Allocate / Return / Transfer) */}
+              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-4">
+                <h3 className="text-md font-bold text-white flex items-center gap-2">
+                  <ArrowRightLeft className="h-5 w-5 text-indigo-400" />
+                  Asset Allocation Panel
+                </h3>
+
+                {selectedAsset.status === "AVAILABLE" && (
+                  <form onSubmit={showTransferBtn ? handleRaiseTransfer : handleAllocateAsset} className="space-y-4">
+                    {conflictError && (
+                      <div className="rounded-lg bg-yellow-950/50 border border-yellow-500/30 p-3 text-xs text-yellow-400">
+                        <strong>Conflict:</strong> {conflictError}. Submit a Transfer Request to request asset release.
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                      {!showTransferBtn && (
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Assignee Type</label>
+                          <select
+                            value={assigneeType}
+                            onChange={(e) => setAssigneeType(e.target.value as "employee" | "department")}
+                            className="w-full rounded-lg border border-slate-800 bg-slate-950 p-2.5 text-xs text-slate-100 focus:outline-none"
+                          >
+                            <option value="employee">Employee</option>
+                            <option value="department">Department</option>
+                          </select>
+                        </div>
+                      )}
+
+                      <div className="space-y-1.5 md:col-span-1">
+                        <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                          Select {assigneeType === "employee" || showTransferBtn ? "Employee" : "Department"}
+                        </label>
+                        <select
+                          required
+                          value={allocHolderId || allocDeptId}
+                          onChange={(e) => {
+                            if (assigneeType === "employee" || showTransferBtn) {
+                              setAllocHolderId(e.target.value);
+                            } else {
+                              setAllocDeptId(e.target.value);
+                            }
+                          }}
+                          className="w-full rounded-lg border border-slate-800 bg-slate-950 p-2.5 text-xs text-slate-100 focus:outline-none"
+                        >
+                          <option value="">Select Recipient...</option>
+                          {assigneeType === "employee" || showTransferBtn
+                            ? employees.map((e) => <option key={e.id} value={e.id}>{e.name} ({e.email})</option>)
+                            : departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)
+                          }
+                        </select>
+                      </div>
+
+                      {!showTransferBtn ? (
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Expected Return Date</label>
+                          <Input
+                            type="date"
+                            value={allocExpectedReturnDate}
+                            onChange={(e) => setAllocExpectedReturnDate(e.target.value)}
+                            className="bg-slate-950 border-slate-800 text-slate-100 h-9"
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Reason for Transfer</label>
+                          <Input
+                            required
+                            value={transferReason}
+                            onChange={(e) => setTransferReason(e.target.value)}
+                            placeholder="Reason for transfer..."
+                            className="bg-slate-950 border-slate-800 text-slate-100 h-9"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                      {showTransferBtn ? (
+                        <>
+                          <Button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6">
+                            Request Transfer
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setShowTransferBtn(false);
+                              setConflictError("");
+                              setTransferReason("");
+                            }}
+                            className="border-slate-800 text-slate-300"
+                          >
+                            Cancel
+                          </Button>
+                        </>
+                      ) : (
+                        <Button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6">
+                          Allocate Asset
+                        </Button>
+                      )}
+                    </div>
+                  </form>
+                )}
+
+                {selectedAsset.status === "ALLOCATED" && (
+                  <div className="space-y-4">
+                    {/* Return Form */}
+                    <form onSubmit={handleReturnAsset} className="space-y-3">
+                      <div className="text-sm text-slate-300">
+                        This asset is currently active. To release it back into available inventory, submit the return report below.
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div className="space-y-1.5 md:col-span-2">
+                          <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Condition at Return (Notes)</label>
+                          <Input
+                            value={returnCondition}
+                            onChange={(e) => setReturnCondition(e.target.value)}
+                            placeholder="Good, needs cleaning, minor scratches..."
+                            className="bg-slate-950 border-slate-800 text-slate-100 h-9"
+                          />
+                        </div>
+                        <Button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold h-9">
+                          <Undo2 className="h-4 w-4 mr-1.5" /> Return Asset
+                        </Button>
+                      </div>
+                    </form>
+
+                    {/* Quick Transfer Option (Enables staff to request transfer even when already allocated) */}
+                    <div className="border-t border-slate-800/80 pt-4 space-y-2">
+                      <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">Request Reallocation / Transfer</div>
+                      <form onSubmit={handleRaiseTransfer} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Transfer To (Employee)</label>
+                          <select
+                            required
+                            value={allocHolderId}
+                            onChange={(e) => setAllocHolderId(e.target.value)}
+                            className="w-full rounded-lg border border-slate-800 bg-slate-950 p-2.5 text-xs text-slate-100 focus:outline-none h-9"
+                          >
+                            <option value="">Select Employee...</option>
+                            {employees.map((e) => <option key={e.id} value={e.id}>{e.name} ({e.email})</option>)}
+                          </select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Reason</label>
+                          <Input
+                            required
+                            value={transferReason}
+                            onChange={(e) => setTransferReason(e.target.value)}
+                            placeholder="Project transfer..."
+                            className="bg-slate-950 border-slate-800 text-slate-100 h-9"
+                          />
+                        </div>
+                        <Button type="submit" variant="outline" className="border-slate-800 text-indigo-400 hover:text-indigo-300 hover:bg-slate-850 h-9">
+                          <ArrowRightLeft className="h-4 w-4 mr-1.5" /> Submit Transfer
+                        </Button>
+                      </form>
+                    </div>
+                  </div>
+                )}
+
+                {selectedAsset.status !== "AVAILABLE" && selectedAsset.status !== "ALLOCATED" && (
+                  <div className="text-sm text-slate-500 italic py-2">
+                    Allocations and transfers are disabled because the asset status is currently "{selectedAsset.status}".
+                  </div>
+                )}
+              </div>
+
+              {/* History Lists */}
               <div className="space-y-6 pt-4 border-t border-slate-800">
                 {/* Allocation History Section */}
                 <div className="space-y-3">

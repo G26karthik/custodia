@@ -63,15 +63,18 @@ export async function GET(req: Request) {
     ]);
 
     // Fetch filters options for search bar dropdowns
-    const [categories, departments] = await Promise.all([
+    // Fetch filters options for search bar dropdowns and active users for allocation
+    const [categories, departments, users] = await Promise.all([
       db.category.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } }),
       db.department.findMany({ where: { status: 'ACTIVE' }, select: { id: true, name: true }, orderBy: { name: 'asc' } }),
+      db.user.findMany({ where: { status: 'ACTIVE' }, select: { id: true, name: true, email: true }, orderBy: { name: 'asc' } }),
     ]);
 
     return NextResponse.json({
       assets,
       categories,
       departments,
+      users,
       total,
       page,
       limit,
