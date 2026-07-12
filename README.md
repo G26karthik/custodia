@@ -52,6 +52,21 @@ Implemented Screen 8 with live-updating audit cycles and auditor checklist.
 - Auditor checklist: Verified, Missing, Damaged, notes
 - Close cycle locks edits, marks Missing assets as LOST, and notifies Asset Managers
 
+## Phase 9 - Reports & Analytics
+
+Implemented Screen 9 with live operational analytics.
+
+- Route: `/reports`
+- API: `/api/reports`
+- Service layer: `src/lib/services/reportService.ts`
+- RBAC for Admin, Asset Manager, and Department Head
+- Utilization by department
+- Maintenance frequency
+- Most-used and idle assets
+- Maintenance / retirement risk score
+- Booking heatmap
+- CSV export via `/api/reports?format=csv`
+
 First, run the development server:
 
 ```bash
