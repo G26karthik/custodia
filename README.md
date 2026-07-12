@@ -40,6 +40,18 @@ Implemented Screen 6 with a live-updating booking board.
 - Exact overlap rule: `newStart < existingEnd AND newEnd > existingStart`
 - Seed data creates Conference Room B2 with a 9:00-10:00 booking for acceptance testing
 
+## Phase 8 - Asset Audit
+
+Implemented Screen 8 with live-updating audit cycles and auditor checklist.
+
+- Route: `/audit`
+- API: `/api/audits`, `/api/audits/items/[id]`, `/api/audits/[id]/close`
+- Service layer: `src/lib/services/auditService.ts`
+- Zod validation and server-side RBAC
+- Create audit cycle by department/location scope
+- Auditor checklist: Verified, Missing, Damaged, notes
+- Close cycle locks edits, marks Missing assets as LOST, and notifies Asset Managers
+
 First, run the development server:
 
 ```bash
