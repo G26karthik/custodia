@@ -92,6 +92,83 @@ async function main() {
       },
     }));
 
+  const techDept = await prisma.department.findUnique({ where: { code: 'TECH' } });
+  const financeDept = await prisma.department.findUnique({ where: { code: 'FIN' } });
+  const laptops = await prisma.category.findUnique({ where: { name: 'Laptops' } });
+  const furniture = await prisma.category.findUnique({ where: { name: 'Office Furniture' } });
+  const monitors = await prisma.category.findUnique({ where: { name: 'Monitors' } });
+
+  const demoAssets = [
+    ['AF-0101', 'ThinkPad T14', laptops?.id, techDept?.id, 'Desk T01', 'ALLOCATED'],
+    ['AF-0102', 'MacBook Air', laptops?.id, techDept?.id, 'Desk T02', 'AVAILABLE'],
+    ['AF-0103', 'Dell Monitor 27', monitors?.id, techDept?.id, 'Desk T03', 'AVAILABLE'],
+    ['AF-0104', 'Standing Desk', furniture?.id, techDept?.id, 'Floor 2', 'AVAILABLE'],
+    ['AF-0105', 'Finance Laptop', laptops?.id, financeDept?.id, 'Finance Bay', 'ALLOCATED'],
+    ['AF-0106', 'Finance Monitor', monitors?.id, financeDept?.id, 'Finance Bay', 'AVAILABLE'],
+    ['AF-0107', 'Visitor Chair Set', furniture?.id, operationsDept.id, 'Lobby', 'AVAILABLE'],
+    ['AF-0108', 'Ops Laptop', laptops?.id, operationsDept.id, 'Ops Desk', 'UNDER_MAINTENANCE'],
+    ['AF-0109', 'Conference Display', monitors?.id, operationsDept.id, 'Room B2', 'AVAILABLE'],
+    ['AF-0110', 'Training Desk', furniture?.id, operationsDept.id, 'Training Room', 'AVAILABLE'],
+    ['AF-0111', 'Spare Laptop', laptops?.id, techDept?.id, 'IT Store', 'AVAILABLE'],
+    ['AF-0112', 'Retiring Monitor', monitors?.id, techDept?.id, 'IT Store', 'AVAILABLE'],
+  ] as const;
+
+  for (const [assetTag, name, categoryId, departmentId, location, status] of demoAssets) {
+    if (!categoryId) continue;
+    const existing = await prisma.asset.findUnique({ where: { assetTag } });
+    if (!existing) {
+      await prisma.asset.create({
+        data: {
+          assetTag,
+          name,
+          categoryId,
+          departmentId: departmentId || null,
+          location,
+          condition: 'Good',
+          serialNumber: `SN-${assetTag}`,
+          acquisitionDate: new Date('2024-01-15'),
+          status,
+        },
+      });
+    }
+  }
+
+  const allocationAsset = await prisma.asset.findUnique({ where: { assetTag: 'AF-0101' } });
+  if (allocationAsset) {
+    const existingAllocation = await prisma.allocation.findFirst({
+      where: { assetId: allocationAsset.id, isActive: true },
+    });
+    if (!existingAllocation) {
+      await prisma.allocation.create({
+        data: {
+          assetId: allocationAsset.id,
+          holderId: adminUser.id,
+          departmentId: techDept?.id,
+          expectedReturnDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+          isActive: true,
+        },
+      });
+    }
+  }
+
+  const upcomingAsset = await prisma.asset.findUnique({ where: { assetTag: 'AF-0105' } });
+  if (upcomingAsset) {
+    const existingUpcoming = await prisma.allocation.findFirst({
+      where: { assetId: upcomingAsset.id, isActive: true },
+    });
+    if (!existingUpcoming) {
+      await prisma.allocation.create({
+        data: {
+          assetId: upcomingAsset.id,
+          holderId: adminUser.id,
+          departmentId: financeDept?.id,
+          expectedReturnDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
+          isActive: true,
+        },
+      });
+    }
+  }
+
   const roomB2 =
     (await prisma.asset.findUnique({ where: { assetTag: 'AF-RB2' } })) ||
     (await prisma.asset.create({
@@ -139,7 +216,6 @@ async function main() {
   });
 
   if (!existingAudit) {
-    const techDept = await prisma.department.findUnique({ where: { code: 'TECH' } });
     const laptopCategory = await prisma.category.findUnique({ where: { name: 'Laptops' } });
     let demoAsset = await prisma.asset.findFirst({ where: { assetTag: 'AF-AUD1' } });
 

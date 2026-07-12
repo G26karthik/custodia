@@ -67,6 +67,20 @@ Implemented Screen 9 with live operational analytics.
 - Booking heatmap
 - CSV export via `/api/reports?format=csv`
 
+## Phase 10 - Dashboard + Integration
+
+Implemented the final live dashboard layer.
+
+- Route: `/dashboard`
+- API: `/api/dashboard`
+- Service layer: `src/lib/services/dashboardService.ts`
+- Live KPI polling every 7 seconds
+- KPI cards for availability, allocation, maintenance, bookings, transfers, upcoming returns, and overdue returns
+- Overdue returns highlighted separately
+- Quick actions for Register Asset, Book Resource, and Raise Maintenance Request
+- Recent activity feed from `ActivityLog`
+- Seed data expanded with realistic demo assets and return dates
+
 First, run the development server:
 
 ```bash
