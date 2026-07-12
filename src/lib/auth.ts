@@ -12,6 +12,17 @@ export interface SessionPayload {
   role: Role;
 }
 
+// Global variable for mocking cookies in standalone test environments
+let mockCookieStore: {
+  get: (key: string) => { value: string } | undefined;
+  set: (key: string, value: string, options?: any) => void;
+  delete: (key: string) => void;
+} | null = null;
+
+export function setMockCookieStore(store: typeof mockCookieStore) {
+  mockCookieStore = store;
+}
+
 export async function signSession(payload: SessionPayload): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: 'HS256' })
@@ -32,6 +43,10 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
 }
 
 export async function setSessionCookie(token: string) {
+  if (mockCookieStore) {
+    mockCookieStore.set('session', token);
+    return;
+  }
   const cookieStore = await cookies();
   cookieStore.set('session', token, {
     httpOnly: true,
@@ -43,13 +58,22 @@ export async function setSessionCookie(token: string) {
 }
 
 export async function clearSessionCookie() {
+  if (mockCookieStore) {
+    mockCookieStore.delete('session');
+    return;
+  }
   const cookieStore = await cookies();
   cookieStore.delete('session');
 }
 
 export async function getSession(): Promise<SessionPayload | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('session')?.value;
+  let token: string | undefined;
+  if (mockCookieStore) {
+    token = mockCookieStore.get('session')?.value;
+  } else {
+    const cookieStore = await cookies();
+    token = cookieStore.get('session')?.value;
+  }
   if (!token) return null;
   return verifySession(token);
 }
