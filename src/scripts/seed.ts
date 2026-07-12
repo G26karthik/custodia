@@ -134,6 +134,53 @@ async function main() {
     console.log('Created demo Room B2 booking from 9:00 to 10:00');
   }
 
+  const existingAudit = await prisma.auditCycle.findFirst({
+    where: { name: 'Q3 Technology Audit' },
+  });
+
+  if (!existingAudit) {
+    const techDept = await prisma.department.findUnique({ where: { code: 'TECH' } });
+    const laptopCategory = await prisma.category.findUnique({ where: { name: 'Laptops' } });
+    let demoAsset = await prisma.asset.findFirst({ where: { assetTag: 'AF-AUD1' } });
+
+    if (!demoAsset && techDept && laptopCategory) {
+      demoAsset = await prisma.asset.create({
+        data: {
+          assetTag: 'AF-AUD1',
+          name: 'Audit Demo Laptop',
+          categoryId: laptopCategory.id,
+          serialNumber: 'AUDIT-DEMO-001',
+          condition: 'Good',
+          location: 'Desk E12',
+          departmentId: techDept.id,
+          status: 'AVAILABLE',
+        },
+      });
+    }
+
+    if (techDept && demoAsset) {
+      await prisma.auditCycle.create({
+        data: {
+          name: 'Q3 Technology Audit',
+          scopeDeptId: techDept.id,
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          auditors: {
+            create: { userId: adminUser.id },
+          },
+          items: {
+            create: {
+              assetId: demoAsset.id,
+              expectedLocation: 'Desk E12',
+              verification: 'PENDING',
+            },
+          },
+        },
+      });
+      console.log('Created demo audit cycle');
+    }
+  }
+
   const existingNotifications = await prisma.notification.count({
     where: { userId: adminUser.id },
   });
