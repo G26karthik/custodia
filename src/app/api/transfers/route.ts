@@ -3,6 +3,19 @@ import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { notify, logActivity } from '@/lib/notifications';
 import { TransferStatus } from '@prisma/client';
+import { z } from 'zod';
+
+const CreateTransferSchema = z.object({
+  assetId: z.string().cuid('Valid Asset ID is required.'),
+  toUserId: z.string().cuid('Valid Target Employee is required.'),
+  reason: z.string().max(250).optional().nullable(),
+});
+
+const ResolveTransferSchema = z.object({
+  id: z.string().cuid('Valid Transfer Request ID is required.'),
+  action: z.enum(['APPROVE', 'REJECT'], { message: 'Action must be APPROVE or REJECT.' }),
+});
+
 
 // GET: List transfer requests filtered by role permissions
 export async function GET(req: Request) {
@@ -75,12 +88,13 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
-    const { assetId, toUserId, reason } = body;
-
-    if (!assetId || !toUserId) {
-      return NextResponse.json({ error: 'Asset and Target Employee are required.' }, { status: 400 });
+    const body = await req.json().catch(() => null);
+    const parsed = CreateTransferSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid input.' }, { status: 400 });
     }
+
+    const { assetId, toUserId, reason } = parsed.data;
 
     // 1. Get the current active allocation for this asset
     const activeAllocation = await db.allocation.findFirst({
@@ -135,12 +149,13 @@ export async function PATCH(req: Request) {
   }
 
   try {
-    const body = await req.json();
-    const { id, action } = body; // action is 'APPROVE' or 'REJECT'
-
-    if (!id || !action) {
-      return NextResponse.json({ error: 'Request ID and Action are required.' }, { status: 400 });
+    const body = await req.json().catch(() => null);
+    const parsed = ResolveTransferSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid input.' }, { status: 400 });
     }
+
+    const { id, action } = parsed.data;
 
     // 1. Fetch TransferRequest and relation data
     const transfer = await db.transferRequest.findUnique({

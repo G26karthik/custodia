@@ -3,16 +3,22 @@ import { db } from '@/lib/db';
 import { signSession, setSessionCookie } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
+import { z } from 'zod';
+
+const LoginSchema = z.object({
+  email: z.string().trim().email('A valid email address is required.'),
+  password: z.string().min(1, 'Password is required.'),
+});
+
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required.' },
-        { status: 400 }
-      );
+    const body = await req.json().catch(() => null);
+    const parsed = LoginSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid input.' }, { status: 400 });
     }
+
+    const { email, password } = parsed.data;
 
     // Find user
     const user = await db.user.findUnique({

@@ -3,6 +3,18 @@ import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { notify, logActivity } from '@/lib/notifications';
 
+import { z } from 'zod';
+
+const AllocateSchema = z.object({
+  assetId: z.string().cuid('Valid Asset ID is required.'),
+  holderId: z.string().cuid().nullable().optional(),
+  departmentId: z.string().cuid().nullable().optional(),
+  expectedReturnDate: z.string().datetime().nullable().optional().or(z.string().nullable().optional()),
+}).refine((data) => data.holderId || data.departmentId, {
+  message: 'Either Holder Employee or Department must be selected.',
+  path: ['holderId'],
+});
+
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) {
@@ -10,16 +22,13 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
-    const { assetId, holderId, departmentId, expectedReturnDate } = body;
-
-    if (!assetId) {
-      return NextResponse.json({ error: 'Asset ID is required.' }, { status: 400 });
+    const body = await req.json().catch(() => null);
+    const parsed = AllocateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid input.' }, { status: 400 });
     }
 
-    if (!holderId && !departmentId) {
-      return NextResponse.json({ error: 'Either Holder Employee or Department must be selected.' }, { status: 400 });
-    }
+    const { assetId, holderId, departmentId, expectedReturnDate } = parsed.data;
 
     // Fetch the asset and check its current allocation status
     const asset = await db.asset.findUnique({
