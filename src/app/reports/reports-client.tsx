@@ -5,7 +5,7 @@ import useSWR from 'swr';
 import { BarChart3, Bell, Download, LayoutDashboard, Loader2, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Navbar } from '@/components/navbar';
+import { Sidebar } from '@/components/sidebar';
 
 type ReportData = {
   utilizationByDepartment: Array<{ id: string; name: string; totalAssets: number; activeAllocations: number; utilization: number }>;
@@ -47,10 +47,10 @@ export function ReportsClient() {
   const bookingMax = maxValue(data?.bookingHeatmap.map((row) => row.count) ?? []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
-      <Navbar activePath="/reports" />
+    <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans">
+      <Sidebar activePath="/reports" />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="flex-1 px-8 py-8 overflow-auto">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white">Reports & Analytics</h1>

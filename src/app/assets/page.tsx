@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { LayoutDashboard, LogOut, Settings, Plus, User, Search, ShieldAlert, BadgeInfo, Calendar, Landmark, MapPin, Eye, CheckCircle2, ArrowRightLeft, Undo2, Wrench } from "lucide-react";
-import { Navbar } from "@/components/navbar";
+import { Sidebar } from "@/components/sidebar";
 
 interface Category {
   id: string;
@@ -475,12 +475,11 @@ export default function AssetRegistryPage() {
   const showTransfersBoard = currentUser?.role === "ADMIN" || currentUser?.role === "ASSET_MANAGER" || currentUser?.role === "DEPARTMENT_HEAD";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
-      {/* Navbar */}
-      <Navbar activePath="/assets" />
+    <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans">
+      <Sidebar activePath="/assets" />
 
       {/* Main Asset Panel */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="flex-1 px-8 py-8 overflow-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">

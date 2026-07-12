@@ -40,11 +40,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# hackathon resource files
 AssetFlow - Enterprise Asset & Resource Management System - 8 hours.excalidraw.png
-AssetFlow problem statement.pdfAssetFlow problem statement.pdf
-PROMPT_1_ownership_lifecycle.md
+*problem statement.pdf*
+# custom documentation
+AGENTS.md
+CLAUDE.md
+Front End Design SKILL.md
 ponytail-enterprise-scale.mdc
 GLOBAL_STANDARDS.md
 PROMPT_1_continuation_phases_4_5.md
+PROMPT_1_ownership_lifecycle.md
+presentation_script.md
 

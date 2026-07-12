@@ -20,7 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Navbar } from '@/components/navbar';
+import { Sidebar } from '@/components/sidebar';
 
 type UserSummary = {
   id: string;
@@ -215,10 +215,10 @@ export function ResourceBookingClient({ user }: { user: UserSummary }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
-      <Navbar activePath="/resource-booking" />
+    <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans">
+      <Sidebar activePath="/resource-booking" />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="flex-1 px-8 py-8 overflow-auto">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white">Resource Booking</h1>

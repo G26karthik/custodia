@@ -7,7 +7,7 @@ import { Bell, CheckCircle2, ClipboardCheck, LayoutDashboard, Loader2, Lock, Sea
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Navbar } from '@/components/navbar';
+import { Sidebar } from '@/components/sidebar';
 
 type UserSummary = { id: string; name: string; email: string; role: string; status?: string };
 type Department = { id: string; name: string; code: string };
@@ -153,10 +153,10 @@ export function AuditClient({ user }: { user: UserSummary }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
-      <Navbar activePath="/audit" />
+    <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans">
+      <Sidebar activePath="/audit" />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="flex-1 px-8 py-8 overflow-auto">
         <div className="mb-8">
           <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white">Asset Audit</h1>
           <p className="mt-2 text-sm text-slate-400">Create cycles, verify assets, and close discrepancy reports with live updates.</p>

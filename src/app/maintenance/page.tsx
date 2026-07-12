@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { LayoutDashboard, LogOut, Settings, Plus, Landmark, ShieldAlert, CheckCircle2, Search, ArrowRight, User, AlertCircle, Wrench, ShieldCheck, ThumbsUp, ThumbsDown } from "lucide-react";
-import { Navbar } from "@/components/navbar";
+import { Sidebar } from "@/components/sidebar";
 
 interface Asset {
   id: string;
@@ -235,12 +235,11 @@ export default function MaintenanceKanbanPage() {
   const isManager = currentUser?.role === "ASSET_MANAGER" || currentUser?.role === "ADMIN";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
-      {/* Navbar */}
-      <Navbar activePath="/maintenance" />
+    <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans">
+      <Sidebar activePath="/maintenance" />
 
       {/* Main Panel */}
-      <main className="mx-auto max-w-[95%] px-4 py-8">
+      <main className="flex-1 px-8 py-8 overflow-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
           <div>
             <div className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">Screen 7</div>

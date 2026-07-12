@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutDashboard, LogOut, Settings, Plus, Edit2, UserCheck, Folder, Network, Search, Trash2, ShieldAlert } from "lucide-react";
-import { Navbar } from "@/components/navbar";
+import { Sidebar } from "@/components/sidebar";
 
 interface UserInfo {
   id: string;
@@ -311,12 +311,11 @@ export default function OrgSetupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
-      {/* Top Navbar */}
-      <Navbar activePath="/admin/setup" />
+    <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans">
+      <Sidebar activePath="/admin/setup" />
 
       {/* Main Admin Setup Panel */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="flex-1 px-8 py-8 overflow-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
             <Settings className="h-8 w-8 text-indigo-500" />
