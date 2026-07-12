@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# hackathon resource files
+AssetFlow - Enterprise Asset & Resource Management System - 8 hours.excalidraw.png
+AssetFlow problem statement.pdfAssetFlow problem statement.pdf
+PROMPT_1_ownership_lifecycle.md
+ponytail-enterprise-scale.mdc
+
