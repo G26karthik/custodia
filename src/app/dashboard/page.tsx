@@ -5,7 +5,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { clearSessionCookie } from "@/lib/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LayoutDashboard, LogOut, Settings, User, Landmark } from "lucide-react";
+import { Bell, LayoutDashboard, LogOut, Settings, User, Landmark } from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -55,6 +55,14 @@ export default async function DashboardPage() {
               >
                 <Landmark className="h-4 w-4 text-indigo-400" />
                 <span>Asset Registry</span>
+              </Link>
+
+              <Link
+                href="/notifications"
+                className="flex items-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 text-sm font-semibold transition-all duration-200"
+              >
+                <Bell className="h-4 w-4 text-indigo-400" />
+                <span>Notifications</span>
               </Link>
 
               {user.role === "ADMIN" && (

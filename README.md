@@ -2,6 +2,31 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+## Phase 6 - Notifications & Activity Log
+
+Implemented Screen 10 plus the server helpers used by the other modules.
+
+Teammate import path:
+
+```ts
+import { logActivity, notify } from "@/lib/notifications";
+```
+
+Supported notification types:
+
+```ts
+ASSET_ASSIGNED
+MAINTENANCE_APPROVED
+MAINTENANCE_REJECTED
+BOOKING_CONFIRMED
+BOOKING_CANCELLED
+TRANSFER_APPROVED
+OVERDUE_RETURN
+AUDIT_DISCREPANCY
+```
+
+Screen route: `/notifications`
+
 First, run the development server:
 
 ```bash

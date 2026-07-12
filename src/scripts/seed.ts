@@ -77,6 +77,81 @@ async function main() {
     }
   }
 
+  const existingNotifications = await prisma.notification.count({
+    where: { userId: adminUser.id },
+  });
+
+  if (existingNotifications === 0) {
+    await prisma.notification.createMany({
+      data: [
+        {
+          userId: adminUser.id,
+          type: 'ASSET_ASSIGNED',
+          message: 'Laptop AF-0119 assigned to Priya Shah.',
+        },
+        {
+          userId: adminUser.id,
+          type: 'MAINTENANCE_APPROVED',
+          message: 'Maintenance request for AF-0062 approved.',
+        },
+        {
+          userId: adminUser.id,
+          type: 'BOOKING_CONFIRMED',
+          message: 'Booking confirmed: Room B2 from 9:00 to 10:00.',
+        },
+        {
+          userId: adminUser.id,
+          type: 'TRANSFER_APPROVED',
+          message: 'Transfer approved for AF-0033 to Facilities.',
+        },
+        {
+          userId: adminUser.id,
+          type: 'OVERDUE_RETURN',
+          message: 'Overdue return: AF-0201 was due 3 days ago.',
+        },
+        {
+          userId: adminUser.id,
+          type: 'AUDIT_DISCREPANCY',
+          message: 'Audit discrepancy flagged: AF-0088 damaged.',
+        },
+      ],
+    });
+    console.log('Created demo notifications for admin');
+  }
+
+  const existingActivityLogs = await prisma.activityLog.count({
+    where: { userId: adminUser.id },
+  });
+
+  if (existingActivityLogs === 0) {
+    await prisma.activityLog.createMany({
+      data: [
+        {
+          userId: adminUser.id,
+          action: 'CREATE_DEPARTMENT',
+          entityType: 'Department',
+          entityId: 'TECH',
+          details: { code: 'TECH', name: 'Technology' },
+        },
+        {
+          userId: adminUser.id,
+          action: 'REGISTER_ASSET',
+          entityType: 'Asset',
+          entityId: 'AF-0119',
+          details: { assetTag: 'AF-0119', category: 'Laptops' },
+        },
+        {
+          userId: adminUser.id,
+          action: 'APPROVE_MAINTENANCE',
+          entityType: 'MaintenanceRequest',
+          entityId: 'AF-0062',
+          details: { assetTag: 'AF-0062', priority: 'HIGH' },
+        },
+      ],
+    });
+    console.log('Created demo activity logs for admin');
+  }
+
   console.log('Seeding completed successfully!');
 }
 
