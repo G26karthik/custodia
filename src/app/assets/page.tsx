@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { LayoutDashboard, LogOut, Settings, Plus, User, Search, ShieldAlert, BadgeInfo, Calendar, Landmark, MapPin, Eye, CheckCircle2, ArrowRightLeft, Undo2 } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings, Plus, User, Search, ShieldAlert, BadgeInfo, Calendar, Landmark, MapPin, Eye, CheckCircle2, ArrowRightLeft, Undo2, Wrench } from "lucide-react";
 
 interface Category {
   id: string;
@@ -493,6 +493,14 @@ export default function AssetRegistryPage() {
               >
                 <LayoutDashboard className="h-4 w-4" />
                 <span>Dashboard</span>
+              </Link>
+
+              <Link
+                href="/maintenance"
+                className="flex items-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 text-sm font-semibold transition-all duration-200"
+              >
+                <Wrench className="h-4 w-4 text-indigo-400" />
+                <span>Maintenance</span>
               </Link>
 
               {currentUser?.role === "ADMIN" && (
