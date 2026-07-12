@@ -43,9 +43,9 @@ export function Sidebar({ activePath }: SidebarProps) {
   const linkClass = (path: string) => {
     const base = 'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all duration-300';
     if (activePath === path) {
-      return `${base} bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.15)]`;
+      return `${base} bg-indigo-500/15 text-indigo-200 border border-indigo-400/30 shadow-[0_0_18px_rgba(99,102,241,0.25)]`;
     }
-    return `${base} text-slate-400 hover:bg-slate-900/60 hover:text-white hover:translate-x-1`;
+    return `${base} text-slate-300 hover:bg-slate-800/70 hover:text-white hover:translate-x-1`;
   };
 
   return (
@@ -58,7 +58,7 @@ export function Sidebar({ activePath }: SidebarProps) {
           </div>
           <div className="flex flex-col">
             <span className="text-lg font-bold tracking-tight text-white leading-none">AssetFlow</span>
-            <span className="text-[10px] text-slate-500 mt-1 uppercase font-semibold tracking-wider">Enterprise Scale</span>
+            <span className="text-[10px] text-slate-400 mt-1 uppercase font-semibold tracking-wider">Enterprise Scale</span>
           </div>
         </div>
 
