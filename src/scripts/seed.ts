@@ -60,6 +60,7 @@ async function main() {
     { name: 'Laptops', customFields: { warrantyPeriodMonths: 36, trackingType: 'serial' } },
     { name: 'Office Furniture', customFields: { warrantyPeriodMonths: 60, material: 'wood/metal' } },
     { name: 'Monitors', customFields: { warrantyPeriodMonths: 24, resolution: '4K' } },
+    { name: 'Shared Spaces', customFields: { bookingUnit: 'time-slot', requiresPurpose: true } },
   ];
 
   for (const cat of categoriesData) {
@@ -75,6 +76,62 @@ async function main() {
       });
       console.log(`Created category: ${cat.name}`);
     }
+  }
+
+  const sharedSpaces = await prisma.category.findUniqueOrThrow({
+    where: { name: 'Shared Spaces' },
+  });
+
+  const operationsDept =
+    (await prisma.department.findUnique({ where: { code: 'OPS' } })) ||
+    (await prisma.department.create({
+      data: {
+        name: 'Operations',
+        code: 'OPS',
+        status: 'ACTIVE',
+      },
+    }));
+
+  const roomB2 =
+    (await prisma.asset.findUnique({ where: { assetTag: 'AF-RB2' } })) ||
+    (await prisma.asset.create({
+      data: {
+        assetTag: 'AF-RB2',
+        name: 'Conference Room B2',
+        categoryId: sharedSpaces.id,
+        serialNumber: 'ROOM-B2',
+        condition: 'Ready',
+        location: 'HQ Floor 3',
+        departmentId: operationsDept.id,
+        isBookable: true,
+        status: 'AVAILABLE',
+      },
+    }));
+
+  const demoDate = new Date();
+  const demoStart = new Date(demoDate.getFullYear(), demoDate.getMonth(), demoDate.getDate(), 9, 0, 0);
+  const demoEnd = new Date(demoDate.getFullYear(), demoDate.getMonth(), demoDate.getDate(), 10, 0, 0);
+  const existingRoomB2Booking = await prisma.booking.findFirst({
+    where: {
+      assetId: roomB2.id,
+      startTime: demoStart,
+      endTime: demoEnd,
+      status: { not: 'CANCELLED' },
+    },
+  });
+
+  if (!existingRoomB2Booking) {
+    await prisma.booking.create({
+      data: {
+        assetId: roomB2.id,
+        bookedById: adminUser.id,
+        startTime: demoStart,
+        endTime: demoEnd,
+        purpose: 'Procurement planning',
+        status: 'UPCOMING',
+      },
+    });
+    console.log('Created demo Room B2 booking from 9:00 to 10:00');
   }
 
   const existingNotifications = await prisma.notification.count({
@@ -146,6 +203,13 @@ async function main() {
           entityType: 'MaintenanceRequest',
           entityId: 'AF-0062',
           details: { assetTag: 'AF-0062', priority: 'HIGH' },
+        },
+        {
+          userId: adminUser.id,
+          action: 'BOOK_RESOURCE',
+          entityType: 'Booking',
+          entityId: 'AF-RB2',
+          details: { resource: 'Conference Room B2', start: '09:00', end: '10:00' },
         },
       ],
     });
