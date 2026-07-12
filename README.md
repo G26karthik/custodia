@@ -27,6 +27,19 @@ AUDIT_DISCREPANCY
 
 Screen route: `/notifications`
 
+## Phase 7 - Resource Booking
+
+Implemented Screen 6 with a live-updating booking board.
+
+- Route: `/resource-booking`
+- API: `/api/bookings`
+- Service layer: `src/lib/services/bookingService.ts`
+- Zod validation for create/reschedule/cancel flows
+- Server-side RBAC and ownership checks
+- SWR polling every 7 seconds
+- Exact overlap rule: `newStart < existingEnd AND newEnd > existingStart`
+- Seed data creates Conference Room B2 with a 9:00-10:00 booking for acceptance testing
+
 First, run the development server:
 
 ```bash
