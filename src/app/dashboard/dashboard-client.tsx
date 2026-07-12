@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Navbar } from '@/components/navbar';
 
 type DashboardData = {
   user: { name: string; email: string; role: string; department: string };
@@ -55,30 +56,11 @@ export function DashboardClient() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
-      <nav className="sticky top-0 z-50 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white">
-              <LayoutDashboard className="h-5 w-5" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-white">AssetFlow</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Link href="/assets" className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700">Assets</Link>
-            <Link href="/resource-booking" className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700">Bookings</Link>
-            <Link href="/maintenance" className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700">Maintenance</Link>
-            <Link href="/audit" className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700">Audit</Link>
-            <Link href="/reports" className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700">Reports</Link>
-            <Link href="/notifications" className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700">Notifications</Link>
-            <Button onClick={logout} className="bg-slate-800 text-slate-300 hover:bg-slate-700"><LogOut className="mr-2 h-4 w-4" />Log Out</Button>
-          </div>
-        </div>
-      </nav>
+      <Navbar activePath="/dashboard" />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-indigo-400">Phase 10 | Screen 2</p>
             <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white">
               Welcome back, {data?.user.name ?? 'AssetFlow user'}
             </h1>

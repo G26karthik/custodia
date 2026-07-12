@@ -185,16 +185,13 @@ async function main() {
       },
     }));
 
-  const demoDate = new Date();
-  const demoStart = new Date(demoDate.getFullYear(), demoDate.getMonth(), demoDate.getDate(), 9, 0, 0);
-  const demoEnd = new Date(demoDate.getFullYear(), demoDate.getMonth(), demoDate.getDate(), 10, 0, 0);
+  // Use tomorrow so overlap scenario always works regardless of what time seed runs
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const demoStart = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 9, 0, 0);
+  const demoEnd = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 10, 0, 0);
   const existingRoomB2Booking = await prisma.booking.findFirst({
-    where: {
-      assetId: roomB2.id,
-      startTime: demoStart,
-      endTime: demoEnd,
-      status: { not: 'CANCELLED' },
-    },
+    where: { assetId: roomB2.id, startTime: demoStart, endTime: demoEnd, status: { not: 'CANCELLED' } },
   });
 
   if (!existingRoomB2Booking) {
@@ -204,11 +201,11 @@ async function main() {
         bookedById: adminUser.id,
         startTime: demoStart,
         endTime: demoEnd,
-        purpose: 'Procurement planning',
+        purpose: 'Procurement planning — DEMO OVERLAP BLOCKER',
         status: 'UPCOMING',
       },
     });
-    console.log('Created demo Room B2 booking from 9:00 to 10:00');
+    console.log('Created demo Room B2 booking (tomorrow 9:00-10:00) for overlap rejection demo');
   }
 
   const existingAudit = await prisma.auditCycle.findFirst({
@@ -254,6 +251,27 @@ async function main() {
         },
       });
       console.log('Created demo audit cycle');
+    }
+  }
+
+  // Create maintenance request for AF-0108 (UNDER_MAINTENANCE) so kanban board has visible data
+  const maintAsset = await prisma.asset.findUnique({ where: { assetTag: 'AF-0108' } });
+  if (maintAsset) {
+    const existingMaintRequest = await prisma.maintenanceRequest.findFirst({
+      where: { assetId: maintAsset.id },
+    });
+    if (!existingMaintRequest) {
+      await prisma.maintenanceRequest.create({
+        data: {
+          assetId: maintAsset.id,
+          raisedById: adminUser.id,
+          issueDescription: 'Laptop fan making loud noise and overheating during normal usage.',
+          priority: 'HIGH',
+          status: 'APPROVED',
+          approvedById: adminUser.id,
+        },
+      });
+      console.log('Created demo maintenance request for AF-0108 (APPROVED status for kanban demo)');
     }
   }
 

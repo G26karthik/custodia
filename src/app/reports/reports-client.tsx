@@ -5,6 +5,7 @@ import useSWR from 'swr';
 import { BarChart3, Bell, Download, LayoutDashboard, Loader2, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Navbar } from '@/components/navbar';
 
 type ReportData = {
   utilizationByDepartment: Array<{ id: string; name: string; totalAssets: number; activeAllocations: number; utilization: number }>;
@@ -47,31 +48,11 @@ export function ReportsClient() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
-      <nav className="sticky top-0 z-50 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white">
-              <BarChart3 className="h-5 w-5" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-white">AssetFlow</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white">
-              <LayoutDashboard className="h-4 w-4" />
-              Dashboard
-            </Link>
-            <Link href="/notifications" className="flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white">
-              <Bell className="h-4 w-4" />
-              Notifications
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <Navbar activePath="/reports" />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-indigo-400">Phase 9 | Screen 9</p>
             <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white">Reports & Analytics</h1>
             <p className="mt-2 text-sm text-slate-400">Operational insight for utilization, maintenance, idle assets, and booking demand.</p>
           </div>

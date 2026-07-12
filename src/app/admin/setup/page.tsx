@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutDashboard, LogOut, Settings, Plus, Edit2, UserCheck, Folder, Network, Search, Trash2, ShieldAlert } from "lucide-react";
+import { Navbar } from "@/components/navbar";
 
 interface UserInfo {
   id: string;
@@ -312,36 +313,7 @@ export default function OrgSetupPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
       {/* Top Navbar */}
-      <nav className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
-                <Settings className="h-5 w-5" />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-white">AssetFlow</span>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 text-sm font-semibold transition-all duration-200"
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                <span>Dashboard</span>
-              </Link>
-
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 text-sm font-semibold transition-all duration-200"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Log Out</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar activePath="/admin/setup" />
 
       {/* Main Admin Setup Panel */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

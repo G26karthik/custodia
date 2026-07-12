@@ -41,16 +41,19 @@ export async function registerAsset(
   let createdAsset = null;
 
   while (retries > 0) {
-    const lastAsset = await db.asset.findFirst({
+    const candidates = await db.asset.findMany({
+      where: { assetTag: { startsWith: 'AF-' } },
       orderBy: { assetTag: 'desc' },
+      take: 50,
       select: { assetTag: true },
     });
 
     let nextNum = 1;
-    if (lastAsset) {
-      const match = lastAsset.assetTag.match(/AF-(\d+)/);
+    for (const candidate of candidates) {
+      const match = candidate.assetTag.match(/^AF-(\d+)$/);
       if (match) {
         nextNum = parseInt(match[1], 10) + 1;
+        break;
       }
     }
 

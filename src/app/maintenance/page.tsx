@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { LayoutDashboard, LogOut, Settings, Plus, Landmark, ShieldAlert, CheckCircle2, Search, ArrowRight, User, AlertCircle, Wrench, ShieldCheck, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Navbar } from "@/components/navbar";
 
 interface Asset {
   id: string;
@@ -236,54 +237,7 @@ export default function MaintenanceKanbanPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12">
       {/* Navbar */}
-      <nav className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
-                <Landmark className="h-5 w-5" />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-white">AssetFlow</span>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 text-sm font-semibold transition-all duration-200"
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                <span>Dashboard</span>
-              </Link>
-
-              <Link
-                href="/assets"
-                className="flex items-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 text-sm font-semibold transition-all duration-200"
-              >
-                <Landmark className="h-4 w-4 text-indigo-400" />
-                <span>Asset Registry</span>
-              </Link>
-
-              {currentUser?.role === "ADMIN" && (
-                <Link
-                  href="/admin/setup"
-                  className="flex items-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 text-sm font-semibold transition-all duration-200"
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Org Setup</span>
-                </Link>
-              )}
-
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 text-sm font-semibold transition-all duration-200"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Log Out</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar activePath="/maintenance" />
 
       {/* Main Panel */}
       <main className="mx-auto max-w-[95%] px-4 py-8">

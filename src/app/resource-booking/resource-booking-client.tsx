@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Navbar } from '@/components/navbar';
 
 type UserSummary = {
   id: string;
@@ -215,37 +216,11 @@ export function ResourceBookingClient({ user }: { user: UserSummary }) {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
-      <nav className="sticky top-0 z-50 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
-                <BookOpenCheck className="h-5 w-5" />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-white">AssetFlow</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link href="/dashboard" className="flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 transition-all hover:bg-slate-700 hover:text-white">
-                <LayoutDashboard className="h-4 w-4" />
-                Dashboard
-              </Link>
-              <Link href="/notifications" className="flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 transition-all hover:bg-slate-700 hover:text-white">
-                <Bell className="h-4 w-4" />
-                Notifications
-              </Link>
-              <Button onClick={handleLogout} className="bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white">
-                <LogOut className="mr-2 h-4 w-4" />
-                Log Out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar activePath="/resource-booking" />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-indigo-400">Phase 7 | Screen 6</p>
             <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white">Resource Booking</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
               Live-updating calendar for shared rooms, vehicles, and equipment with strict overlap prevention.
